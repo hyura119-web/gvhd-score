@@ -532,6 +532,33 @@
       onGroupChange();
     }
 
+    // 프로젝트의 첫 번째 그룹 및 첫 번째 마우스 ID로 세팅하는 함수
+    function selectFirstGroupAndMouse() {
+      const projectName = getSelectedProjectName();
+      const groupInput = document.getElementById('groupName');
+      const mouseInput = document.getElementById('mouseId');
+
+      const projMice = mouseOrderList.filter(m => m.projectName === projectName);
+
+      if (projMice.length > 0) {
+        groupInput.value = projMice[0].group;
+        mouseInput.value = projMice[0].id;
+      } else {
+        const keys = Object.keys(mouseBaselines).filter(k => k.startsWith(`${projectName}_`));
+        if (keys.length > 0) {
+          const parts = keys[0].split('_');
+          if (parts.length >= 3) {
+            groupInput.value = parts[1];
+            mouseInput.value = parts.slice(2).join('_');
+          }
+        } else {
+          groupInput.value = "1";
+          mouseInput.value = "1-1";
+        }
+      }
+      loadBaselineAndPrevious();
+    }
+
     function selectFirstMouseInGroup() {
       const projectName = getSelectedProjectName();
       const group = document.getElementById('groupName').value.trim();
@@ -556,7 +583,8 @@
 
     function onDateChange() {
       calcDayX();
-      selectFirstMouseInGroup();
+      // 측정날짜 변경 시 Group과 ID 모두 일괄등록 목록 1번 항목으로 초기화
+      selectFirstGroupAndMouse();
     }
 
     function onGroupChange() {
