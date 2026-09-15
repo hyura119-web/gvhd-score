@@ -20,17 +20,16 @@
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 p-2 min-h-screen">
-  <!-- 모바일 폭 100% & 최대 430px 설정 -->
   <div class="w-full max-w-[430px] mx-auto bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-200">
     
-    <!-- 헤더 및 백업/프로젝트 관리/일괄등록 -->
+    <!-- 헤더 -->
     <div class="border-b pb-3 mb-4 space-y-2">
       <div>
         <h1 class="text-base font-extrabold text-slate-900 flex items-center justify-between">
           <span>표준 GvHD 채점 시스템</span>
           <span class="text-xs font-semibold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">Pro</span>
         </h1>
-        <p class="text-[11px] text-slate-500">Cooke's 5-Parameter System (Prism Pivot 시트 지원)</p>
+        <p class="text-[11px] text-slate-500">Cooke's 5-Parameter System (일괄등록 순서 보존)</p>
       </div>
       <div class="grid grid-cols-2 gap-1.5">
         <button type="button" onclick="openBulkModal()" class="touch-target-btn text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold p-2 rounded-lg border border-emerald-300">📋 일괄등록</button>
@@ -44,37 +43,29 @@
     <!-- 입력 폼 -->
     <form id="scoreForm" class="space-y-4" onsubmit="return false;">
       
-      <!-- 1. 연구원 & 프로젝트 연동 -->
+      <!-- 1. 프로젝트 선택 & 설정 -->
       <div class="bg-blue-50/70 p-3 rounded-xl border border-blue-200 space-y-2">
         <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">1. 연구원</label>
-            <select id="evaluatorSelect" onchange="onEvaluatorChange()" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium min-h-[44px] text-xs">
+          <div class="col-span-2">
+            <label class="block text-xs font-semibold mb-1 text-slate-700">1. 프로젝트 선택</label>
+            <select id="projectSelect" onchange="onProjectChange()" class="w-full p-2 border border-slate-300 rounded-lg bg-white font-medium min-h-[44px] text-xs">
               <option value="">-- 선택 --</option>
             </select>
-            <input type="text" id="newEvaluatorInput" placeholder="새 연구원 이름" oninput="onNewEvaluatorInput()" class="w-full mt-1 p-2 border border-blue-300 rounded-lg text-xs bg-white hidden min-h-[44px]">
+            <input type="text" id="newProjectInput" placeholder="새 프로젝트명 입력" oninput="onNewProjectInput()" class="w-full mt-1 p-2 border border-blue-300 rounded-lg text-xs bg-white hidden min-h-[44px]">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">2. 프로젝트</label>
-            <select id="projectSelect" onchange="onProjectChange()" disabled class="w-full p-2 border border-slate-300 rounded-lg bg-slate-100 font-medium min-h-[44px] text-xs">
-              <option value="">-- 연구원 먼저 --</option>
-            </select>
-            <input type="text" id="newProjectInput" placeholder="새 프로젝트명" oninput="onNewProjectInput()" class="w-full mt-1 p-2 border border-blue-300 rounded-lg text-xs bg-white hidden min-h-[44px]">
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-semibold text-slate-700">3. Day 0</label>
-              <span id="day0StatusBadge" class="text-[10px] font-bold text-slate-500"></span>
+            <div class="flex justify-between items-center mb-1 gap-1">
+              <label class="text-[11px] font-semibold text-slate-700 truncate">2. Day 0 (투여일)</label>
+              <span id="day0StatusBadge" class="text-[10px] font-bold text-slate-500 shrink-0"></span>
             </div>
-            <input type="date" id="day0Date" onchange="calcDayX()" class="w-full p-2 border border-slate-300 rounded-lg bg-slate-100 text-xs min-h-[44px]" readonly required>
+            <input type="date" id="day0Date" onchange="calcDayX()" class="w-full p-1.5 border border-slate-300 rounded-lg bg-slate-100 text-xs min-h-[44px]" readonly required>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">경과일</label>
-            <div class="p-2 bg-white border border-blue-300 rounded-lg text-center shadow-sm min-h-[44px] flex items-center justify-center">
-              <span id="dayXText" class="text-sm font-black text-blue-700">Day -</span>
+            <label class="block text-[11px] font-semibold mb-1 text-slate-700 truncate">현재 경과일</label>
+            <div class="p-1.5 bg-white border border-blue-300 rounded-lg text-center shadow-sm min-h-[44px] flex items-center justify-center">
+              <span id="dayXText" class="text-xs font-black text-blue-700">Day -</span>
             </div>
           </div>
         </div>
@@ -82,39 +73,38 @@
 
       <!-- 2. 개체 선택 & 직전 기록 조회 -->
       <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
-        <div class="border-b pb-1">
+        <div class="border-b pb-1 flex justify-between items-center">
           <span class="text-xs font-bold text-slate-700">개체 데이터 입력</span>
+          <span class="text-[10px] text-blue-600 font-semibold">💡 체중 입력 후 Enter시 자동 이동</span>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">측정 날짜</label>
-            <input type="date" id="date" class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" onchange="calcDayX()" required>
+            <label class="block text-xs font-semibold mb-1 text-slate-700 truncate">측정 날짜</label>
+            <input type="date" id="date" class="w-full p-1.5 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" onchange="calcDayX()" required>
           </div>
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">Group</label>
-            <input type="text" id="groupName" value="" list="groupDatalist" class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" onchange="onGroupChange()" oninput="onGroupChange()" placeholder="그룹 입력/선택" required>
+            <label class="block text-xs font-semibold mb-1 text-slate-700 truncate">Group</label>
+            <input type="text" id="groupName" value="" list="groupDatalist" class="w-full p-1.5 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" onchange="onGroupChange()" oninput="onGroupChange()" placeholder="그룹 입력/선택" required>
             <datalist id="groupDatalist"></datalist>
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-3 gap-1.5">
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">마우스 ID</label>
-            <div class="flex gap-1">
-              <input type="text" id="mouseId" placeholder="예: 1" class="w-full p-1.5 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" autocomplete="off" oninput="loadBaselineAndPrevious()" required>
-              <button type="button" onclick="incrementMouseId()" class="touch-target-btn bg-slate-200 active:bg-slate-300 text-slate-800 font-bold px-2 rounded-lg text-xs shrink-0 border border-slate-300">+1</button>
+            <label class="block text-[11px] font-semibold mb-1 text-slate-700 truncate">마우스 ID</label>
+            <div class="flex gap-0.5">
+              <input type="text" id="mouseId" placeholder="예: 1-1" class="w-full p-1 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" autocomplete="off" oninput="loadBaselineAndPrevious()" required>
+              <button type="button" onclick="incrementMouseId()" class="touch-target-btn bg-slate-200 active:bg-slate-300 text-slate-800 font-bold px-1.5 rounded-lg text-xs shrink-0 border border-slate-300">+1</button>
             </div>
           </div>
           <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-semibold text-slate-700">기초체중</label>
-            </div>
-            <input type="number" step="0.1" inputmode="decimal" id="baseWeight" placeholder="20.0" class="w-full p-2 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" required oninput="syncDay0Weight()">
+            <label class="block text-[11px] font-semibold mb-1 text-slate-700 truncate">기초체중</label>
+            <input type="number" step="0.1" inputmode="decimal" id="baseWeight" placeholder="20.0" class="w-full p-1.5 border border-slate-300 rounded-lg bg-white text-xs min-h-[44px]" required oninput="syncDay0Weight()">
           </div>
           <div>
-            <label class="block text-xs font-semibold mb-1 text-slate-700">현재 체중(g)</label>
-            <input type="number" step="0.1" inputmode="decimal" id="currWeight" placeholder="18.5" class="w-full p-2 border border-blue-400 focus:ring-2 focus:ring-blue-500 rounded-lg bg-white text-xs font-bold min-h-[44px]" oninput="calcWeightScore()" onkeydown="handleWeightKeydown(event)">
+            <label class="block text-[11px] font-semibold mb-1 text-slate-700 truncate">현재 체중(g)</label>
+            <input type="number" step="0.1" inputmode="decimal" id="currWeight" placeholder="18.5" class="w-full p-1.5 border border-blue-400 focus:ring-2 focus:ring-blue-500 rounded-lg bg-white text-xs font-bold min-h-[44px]" oninput="calcWeightScore()" onkeydown="handleWeightKeydown(event)">
           </div>
         </div>
 
@@ -156,13 +146,18 @@
         </div>
       </div>
 
-      <!-- 3. 증상 평가 버튼 -->
+      <!-- 3. 증상 평가 버튼 및 데이터 저장 버튼 -->
       <div class="space-y-3">
-        <div class="flex justify-between items-center border-b pb-1">
-          <h2 class="text-xs font-bold text-slate-700">증상 평가</h2>
-          <button type="button" onclick="setAllZero()" class="touch-target-btn bg-emerald-100 active:bg-emerald-200 text-emerald-800 border border-emerald-300 font-bold px-2 py-1 rounded-lg text-xs">
-            ✨ 모두 0점
-          </button>
+        <div class="flex justify-between items-center border-b pb-1 gap-1">
+          <h2 class="text-xs font-bold text-slate-700 shrink-0">증상 평가</h2>
+          <div class="flex gap-1">
+            <button type="button" onclick="setAllZero()" class="touch-target-btn bg-emerald-100 active:bg-emerald-200 text-emerald-800 border border-emerald-300 font-bold px-2 py-1 rounded-lg text-xs">
+              ✨ 모두 0점
+            </button>
+            <button type="button" id="saveBtn" onclick="saveRecord()" class="touch-target-btn bg-blue-600 active:bg-blue-800 text-white font-extrabold px-3 py-1 rounded-lg text-xs shadow-sm transition">
+              💾 데이터 저장
+            </button>
+          </div>
         </div>
         
         <div class="space-y-2">
@@ -208,39 +203,14 @@
           </div>
         </div>
       </div>
-
-      <button type="button" id="saveBtn" onclick="saveRecord()" class="touch-target-btn w-full bg-blue-600 active:bg-blue-800 text-white font-extrabold py-3 rounded-xl shadow-md text-base transition">
-        💾 데이터 저장하기 (Enter ↵)
-      </button>
     </form>
-
-    <!-- 차트 시각화 영역 -->
-    <div class="mt-6 border-t pt-4">
-      <div class="flex flex-col gap-2 mb-2">
-        <h2 class="text-xs font-bold text-slate-900 flex items-center justify-between">
-          <span>📈 동태 추이 그래프</span>
-          <button type="button" onclick="downloadChartImage()" class="touch-target-btn px-2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white">PNG 저장</button>
-        </h2>
-        <div class="grid grid-cols-3 gap-1">
-          <button type="button" onclick="switchChartMode('weight')" id="btnChartWeight" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-blue-600 text-white">체중 변화율</button>
-          <button type="button" onclick="switchChartMode('score')" id="btnChartScore" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-700">Total Score</button>
-          <button type="button" onclick="switchChartMode('survival')" id="btnChartSurvival" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-700">생존율(%)</button>
-        </div>
-      </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 h-56 relative">
-        <canvas id="gvhdChart"></canvas>
-      </div>
-    </div>
 
     <!-- 데이터 테이블 -->
     <div class="mt-6 border-t pt-4">
       <div class="flex flex-col gap-2 mb-2">
         <h2 class="text-xs font-bold text-slate-900">📊 누적 데이터</h2>
-        <div class="grid grid-cols-2 gap-1.5">
-          <select id="filterEvaluator" onchange="renderTable()" class="p-1.5 border rounded-lg text-xs bg-slate-50 min-h-[44px]">
-            <option value="ALL">전체 연구원</option>
-          </select>
-          <select id="filterProject" onchange="renderTable()" class="p-1.5 border rounded-lg text-xs bg-slate-50 min-h-[44px]">
+        <div class="flex gap-1.5">
+          <select id="filterProject" onchange="renderTable()" class="w-full p-1.5 border rounded-lg text-xs bg-slate-50 min-h-[44px]">
             <option value="ALL">전체 프로젝트</option>
           </select>
         </div>
@@ -258,7 +228,6 @@
             <tr>
               <th class="p-2 text-center"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" class="w-4 h-4"></th>
               <th class="p-2">날짜</th>
-              <th class="p-2">연구원</th>
               <th class="p-2">프로젝트</th>
               <th class="p-2">경과일</th>
               <th class="p-2">Group</th>
@@ -280,9 +249,28 @@
         </table>
       </div>
     </div>
+
+    <!-- 차트 시각화 영역 -->
+    <div class="mt-6 border-t pt-4">
+      <div class="flex flex-col gap-2 mb-2">
+        <h2 class="text-xs font-bold text-slate-900 flex items-center justify-between">
+          <span>📈 동태 추이 그래프</span>
+          <button type="button" onclick="downloadChartImage()" class="touch-target-btn px-2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white">PNG 저장</button>
+        </h2>
+        <div class="grid grid-cols-3 gap-1">
+          <button type="button" onclick="switchChartMode('weight')" id="btnChartWeight" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-blue-600 text-white">체중 변화율</button>
+          <button type="button" onclick="switchChartMode('score')" id="btnChartScore" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-700">Total Score</button>
+          <button type="button" onclick="switchChartMode('survival')" id="btnChartSurvival" class="touch-target-btn p-1 text-[11px] font-bold rounded-lg bg-slate-200 text-slate-700">생존율(%)</button>
+        </div>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 h-56 relative">
+        <canvas id="gvhdChart"></canvas>
+      </div>
+    </div>
+
   </div>
 
-  <!-- 모달 창들 (모바일 폭 최적화) -->
+  <!-- 모달 창들 -->
   <div id="bulkModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
     <div class="bg-white rounded-2xl max-w-[400px] w-full p-4 space-y-3 shadow-xl">
       <div class="flex justify-between items-center border-b pb-2">
@@ -290,7 +278,7 @@
         <button type="button" onclick="closeBulkModal()" class="touch-target-btn text-slate-400 text-2xl font-bold">&times;</button>
       </div>
       <p class="text-[11px] text-slate-600 leading-relaxed">
-        엑셀에서 <strong>Group, MouseID, BaseWeight</strong> 열을 선택하여 일괄 등록합니다.
+        엑셀에서 <strong>Group, MouseID, BaseWeight</strong> 열을 선택하여 일괄 등록합니다. (엑셀 행 순서가 100% 보존됩니다.)
       </p>
       <div class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
         <div>
@@ -298,11 +286,7 @@
           <input type="file" id="bulkFileInput" accept=".xlsx, .xls, .csv" class="w-full text-xs p-1.5 bg-white border rounded-lg min-h-[44px]">
         </div>
         <div>
-          <label class="block font-bold mb-1">2. 지정 연구원</label>
-          <input type="text" id="bulkEvaluator" placeholder="예: 연구원A" class="w-full p-2 border rounded-lg bg-white min-h-[44px]">
-        </div>
-        <div>
-          <label class="block font-bold mb-1">3. 지정 프로젝트명</label>
+          <label class="block font-bold mb-1">2. 지정 프로젝트명</label>
           <input type="text" id="bulkProject" placeholder="예: GvHD_Exp1" class="w-full p-2 border rounded-lg bg-white min-h-[44px]">
         </div>
       </div>
@@ -363,6 +347,7 @@
     let projects = JSON.parse(localStorage.getItem('gvhd_projects') || '[]');
     let mouseBaselines = JSON.parse(localStorage.getItem('gvhd_mouse_baselines') || '{}');
     let groupLastMouseIds = JSON.parse(localStorage.getItem('gvhd_group_last_ids') || '{}');
+    let mouseOrderList = JSON.parse(localStorage.getItem('gvhd_mouse_order_list') || '[]');
 
     let currentScores = { posture: 0, activity: 0, fur: 0, skin: 0 };
     let calculatedWeightScore = 0;
@@ -373,12 +358,11 @@
 
     function syncProjectsFromRecords() {
       records.forEach(r => {
-        if (r.projectName && r.evaluator) {
-          const exists = projects.some(p => p.evaluator === r.evaluator && p.name === r.projectName);
+        if (r.projectName) {
+          const exists = projects.some(p => p.name === r.projectName);
           if (!exists) {
             projects.push({
               id: 'proj_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-              evaluator: r.evaluator,
               name: r.projectName,
               day0Date: r.day0Date || todayStr
             });
@@ -391,8 +375,7 @@
     function cleanDuplicateProjects() {
       const uniqueMap = new Map();
       projects.forEach(p => {
-        const key = `${p.evaluator}_${p.name}`;
-        if (!uniqueMap.has(key)) uniqueMap.set(key, p);
+        if (!uniqueMap.has(p.name)) uniqueMap.set(p.name, p);
       });
       projects = Array.from(uniqueMap.values());
       localStorage.setItem('gvhd_projects', JSON.stringify(projects));
@@ -400,8 +383,16 @@
     
     syncProjectsFromRecords();
 
-    function getMouseKey(evaluator, projectName, group, id) {
-      return `${evaluator}_${projectName || ''}_${group}_${id}`;
+    function getMouseKey(projectName, group, id) {
+      return `${projectName || ''}_${group}_${id}`;
+    }
+
+    function addMouseToOrderList(projectName, group, id) {
+      const exists = mouseOrderList.some(m => m.projectName === projectName && m.group === group && m.id === id);
+      if (!exists) {
+        mouseOrderList.push({ projectName, group, id });
+        localStorage.setItem('gvhd_mouse_order_list', JSON.stringify(mouseOrderList));
+      }
     }
 
     function resetScores() {
@@ -429,28 +420,28 @@
       calcWeightScore();
     }
 
-    function updateEvaluatorSelect() {
-      const select = document.getElementById('evaluatorSelect');
-      const currentVal = select.value;
-      const evaluators = [...new Set([...projects.map(p => p.evaluator), ...records.map(r => r.evaluator)])].filter(Boolean);
+    function updateProjectSelect() {
+      const projSelect = document.getElementById('projectSelect');
+      const currentVal = projSelect.value;
+      projSelect.innerHTML = '<option value="">-- 프로젝트 선택 --</option>';
 
-      select.innerHTML = '<option value="">-- 선택 --</option>';
-      evaluators.forEach(ev => {
+      projects.forEach(p => {
         const opt = document.createElement('option');
-        opt.value = ev; opt.textContent = ev;
-        select.appendChild(opt);
+        opt.value = p.id; opt.textContent = p.name;
+        projSelect.appendChild(opt);
       });
 
       const newOpt = document.createElement('option');
-      newOpt.value = "__NEW__"; newOpt.textContent = "➕ 새 연구원...";
-      select.appendChild(newOpt);
+      newOpt.value = "__NEW__"; newOpt.textContent = "➕ 새 프로젝트...";
+      projSelect.appendChild(newOpt);
 
-      if (evaluators.includes(currentVal) || currentVal === "__NEW__") select.value = currentVal;
-    }
+      if (currentVal && Array.from(projSelect.options).some(o => o.value === currentVal)) {
+        projSelect.value = currentVal;
+      } else if (projects.length > 0) {
+        projSelect.value = projects[0].id;
+      }
 
-    function getSelectedEvaluatorName() {
-      const select = document.getElementById('evaluatorSelect');
-      return select.value === "__NEW__" ? document.getElementById('newEvaluatorInput').value.trim() : select.value;
+      onProjectChange();
     }
 
     function getSelectedProjectName() {
@@ -464,77 +455,19 @@
     }
 
     function syncFiltersWithSelection() {
-      const currentEv = getSelectedEvaluatorName();
       const currentProj = getSelectedProjectName();
       updateFilters();
 
-      const filterEv = document.getElementById('filterEvaluator');
       const filterProj = document.getElementById('filterProject');
-
-      filterEv.value = (currentEv && Array.from(filterEv.options).some(o => o.value === currentEv)) ? currentEv : "ALL";
       filterProj.value = (currentProj && Array.from(filterProj.options).some(o => o.value === currentProj)) ? currentProj : "ALL";
 
       renderTable();
       updateChart();
     }
 
-    function onEvaluatorChange() {
-      const select = document.getElementById('evaluatorSelect');
-      const newEvInput = document.getElementById('newEvaluatorInput');
-      const projSelect = document.getElementById('projectSelect');
-      const selectedEv = select.value;
-
-      if (selectedEv === "__NEW__") {
-        newEvInput.classList.remove('hidden'); newEvInput.focus();
-        projSelect.disabled = false; updateProjectSelect(""); 
-      } else {
-        newEvInput.classList.add('hidden'); newEvInput.value = "";
-        if (!selectedEv) {
-          projSelect.disabled = true; projSelect.innerHTML = '<option value="">-- 연구원 먼저 --</option>'; resetDay0();
-        } else {
-          projSelect.disabled = false; updateProjectSelect(selectedEv);
-        }
-      }
-      updateGroupDatalist(true);
-      syncFiltersWithSelection();
-    }
-
-    function onNewEvaluatorInput() {
-      updateProjectSelect(document.getElementById('newEvaluatorInput').value.trim());
-      syncFiltersWithSelection();
-    }
-
     function onNewProjectInput() {
       updateGroupDatalist(true);
       syncFiltersWithSelection();
-    }
-
-    function updateProjectSelect(evaluatorName) {
-      const projSelect = document.getElementById('projectSelect');
-      projSelect.innerHTML = '<option value="">-- 프로젝트 선택 --</option>';
-
-      if (!evaluatorName) {
-        const newOpt = document.createElement('option');
-        newOpt.value = "__NEW__"; newOpt.textContent = "➕ 새 프로젝트...";
-        projSelect.appendChild(newOpt); projSelect.value = "__NEW__";
-        onProjectChange(); return;
-      }
-
-      const matchingProjects = projects.filter(p => p.evaluator === evaluatorName);
-      matchingProjects.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id; opt.textContent = p.name;
-        projSelect.appendChild(opt);
-      });
-
-      const newOpt = document.createElement('option');
-      newOpt.value = "__NEW__"; newOpt.textContent = "➕ 새 프로젝트...";
-      projSelect.appendChild(newOpt);
-
-      if (matchingProjects.length > 0) projSelect.value = matchingProjects[0].id;
-      else projSelect.value = "";
-      
-      onProjectChange();
     }
 
     function onProjectChange() {
@@ -569,22 +502,31 @@
       if (!datalist) return;
       datalist.innerHTML = '';
 
-      const evaluator = getSelectedEvaluatorName();
       const selectedProjName = getSelectedProjectName();
-      if (!evaluator) return;
+      const projGroups = [];
+      
+      mouseOrderList.filter(m => m.projectName === selectedProjName).forEach(m => {
+        if (!projGroups.includes(m.group)) projGroups.push(m.group);
+      });
 
-      const allEvaluatorRecords = records.filter(r => r.evaluator === evaluator);
-      const allGroups = [];
-      allEvaluatorRecords.forEach(r => { if (r.groupName && !allGroups.includes(r.groupName)) allGroups.push(r.groupName); });
+      Object.keys(mouseBaselines).forEach(k => {
+        if (k.startsWith(`${selectedProjName}_`)) {
+          const parts = k.split('_');
+          if (parts.length >= 3) {
+            const grp = parts[1];
+            if (!projGroups.includes(grp)) projGroups.push(grp);
+          }
+        }
+      });
 
-      allGroups.forEach(grp => {
+      records.filter(r => r.projectName === selectedProjName).forEach(r => {
+        if (r.groupName && !projGroups.includes(r.groupName)) projGroups.push(r.groupName);
+      });
+
+      projGroups.forEach(grp => {
         const opt = document.createElement('option'); opt.value = grp;
         datalist.appendChild(opt);
       });
-
-      const projRecords = records.filter(r => r.evaluator === evaluator && r.projectName === selectedProjName);
-      const projGroups = [];
-      projRecords.forEach(r => { if (r.groupName && !projGroups.includes(r.groupName)) projGroups.push(r.groupName); });
 
       if (forceSetFirst && projGroups.length > 0) groupInput.value = projGroups[0];
       else if (!groupInput.value && projGroups.length > 0) groupInput.value = projGroups[0];
@@ -593,22 +535,26 @@
     }
 
     function onGroupChange() {
-      const evaluator = getSelectedEvaluatorName();
       const projectName = getSelectedProjectName();
       const group = document.getElementById('groupName').value.trim();
       const mouseInput = document.getElementById('mouseId');
 
-      if (evaluator && group) {
-        const trackerKey = `${evaluator}_${projectName}_${group}`;
+      if (group) {
+        const trackerKey = `${projectName}_${group}`;
         if (groupLastMouseIds[trackerKey]) {
           mouseInput.value = groupLastMouseIds[trackerKey];
         } else {
-          const groupMice = records.filter(r => r.evaluator === evaluator && r.projectName === projectName && r.groupName === group);
+          const groupMice = mouseOrderList
+            .filter(m => m.projectName === projectName && m.group === group)
+            .map(m => m.id);
+
           if (groupMice.length > 0) {
-            const sorted = groupMice.map(r => r.mouseId).filter(Boolean);
-            mouseInput.value = getNextMouseId(sorted[sorted.length - 1]);
+            mouseInput.value = groupMice[0];
           } else {
-            mouseInput.value = "1";
+            const fallbackMice = Object.keys(mouseBaselines)
+              .filter(k => k.startsWith(`${projectName}_${group}_`))
+              .map(k => k.split('_').slice(2).join('_'));
+            mouseInput.value = fallbackMice.length > 0 ? fallbackMice[0] : "1-1";
           }
         }
       }
@@ -646,7 +592,7 @@
     }
 
     function getNextMouseId(currentId) {
-      if (!currentId) return '1';
+      if (!currentId) return '1-1';
       const match = currentId.match(/^(.*?)(\d+)$/);
       if (match) {
         const nextNum = parseInt(match[2], 10) + 1;
@@ -660,7 +606,7 @@
       if (input.value.trim()) {
         input.value = getNextMouseId(input.value.trim());
         resetScores(); loadBaselineAndPrevious();
-      } else input.value = "1";
+      } else input.value = "1-1";
     }
 
     function handleWeightKeydown(e) {
@@ -668,7 +614,6 @@
     }
 
     function loadBaselineAndPrevious() {
-      const evaluator = getSelectedEvaluatorName();
       const projectName = getSelectedProjectName();
       const group = document.getElementById('groupName').value.trim();
       const id = document.getElementById('mouseId').value.trim();
@@ -677,16 +622,16 @@
       const sacrificedAlert = document.getElementById('alreadySacrificedAlert');
       const saveBtn = document.getElementById('saveBtn');
 
-      const fullKey = getMouseKey(evaluator, projectName, group, id);
+      const fullKey = getMouseKey(projectName, group, id);
       let baselineVal = mouseBaselines[fullKey];
 
-      if (baselineVal === undefined && mouseBaselines[`${evaluator}_${group}_${id}`] !== undefined) {
-        baselineVal = mouseBaselines[`${evaluator}_${group}_${id}`];
+      if (baselineVal === undefined && mouseBaselines[`${group}_${id}`] !== undefined) {
+        baselineVal = mouseBaselines[`${group}_${id}`];
       }
 
-      if (baselineVal === undefined && evaluator && group && id) {
+      if (baselineVal === undefined && group && id) {
         const matched = records.filter(r => 
-          r.evaluator === evaluator && (!projectName || r.projectName === projectName) && 
+          (!projectName || r.projectName === projectName) && 
           r.groupName === group && r.mouseId === id
         ).sort((a,b) => new Date(a.date) - new Date(b.date));
 
@@ -706,7 +651,7 @@
       syncDay0Weight();
 
       const matchedRecords = records.filter(r => 
-        r.evaluator === evaluator && (!projectName || r.projectName === projectName) && 
+        (!projectName || r.projectName === projectName) && 
         r.groupName === group && r.mouseId === id
       );
 
@@ -783,9 +728,6 @@
     function saveRecord() {
       if (isCurrentMouseSacrificed) return alert("이 마우스는 이미 희생/폐사 처리되었습니다.");
 
-      const evaluator = getSelectedEvaluatorName();
-      if (!evaluator) return alert("연구원을 선택하거나 입력하세요.");
-
       const projSelect = document.getElementById('projectSelect');
       let projectId = projSelect.value;
       let projectName = "";
@@ -797,10 +739,10 @@
         projectName = document.getElementById('newProjectInput').value.trim();
         if (!projectName) return alert("새 프로젝트 이름을 입력하세요.");
 
-        const existingProj = projects.find(p => p.evaluator === evaluator && p.name === projectName);
+        const existingProj = projects.find(p => p.name === projectName);
         if (existingProj) projectId = existingProj.id;
         else {
-          const newProj = { id: 'proj_' + Date.now(), evaluator, name: projectName, day0Date };
+          const newProj = { id: 'proj_' + Date.now(), name: projectName, day0Date };
           projects.push(newProj);
           localStorage.setItem('gvhd_projects', JSON.stringify(projects));
           projectId = newProj.id;
@@ -810,7 +752,13 @@
         if (p) projectName = p.name;
       }
 
-      const mouseId = document.getElementById('mouseId').value.trim();
+      if (!projectName) return alert("프로젝트를 선택하거나 입력해 주세요.");
+
+      const mouseIdInput = document.getElementById('mouseId');
+      const groupInput = document.getElementById('groupName');
+      
+      const mouseId = mouseIdInput.value.trim();
+      let groupName = groupInput.value.trim() || "1";
       const baseWeight = parseFloat(document.getElementById('baseWeight').value);
       const dayXText = document.getElementById('dayXText').innerText;
 
@@ -821,19 +769,19 @@
       const currWeight = parseFloat(document.getElementById('currWeight').value);
       if (!mouseId || isNaN(baseWeight) || isNaN(currWeight)) return alert("마우스 ID 및 체중을 입력하세요.");
 
-      const groupName = document.getElementById('groupName').value.trim() || "1";
-      
-      const fullKey = getMouseKey(evaluator, projectName, groupName, mouseId);
+      const fullKey = getMouseKey(projectName, groupName, mouseId);
       mouseBaselines[fullKey] = baseWeight;
-      mouseBaselines[`${evaluator}_${groupName}_${mouseId}`] = baseWeight;
+      mouseBaselines[`${groupName}_${mouseId}`] = baseWeight;
       localStorage.setItem('gvhd_mouse_baselines', JSON.stringify(mouseBaselines));
+
+      addMouseToOrderList(projectName, groupName, mouseId);
 
       const totalScore = calculatedWeightScore + currentScores.posture + currentScores.activity + currentScores.fur + currentScores.skin;
       const isSac = document.getElementById('isSacrificed').checked;
 
       const record = {
         date: document.getElementById('date').value, day0Date, dayX: dayXText,
-        evaluator, projectName, groupName, mouseId, baseWeight, currWeight,
+        projectName, groupName, mouseId, baseWeight, currWeight,
         weightPct: document.getElementById('weightChangePercent').innerText,
         weightScore: calculatedWeightScore, ...currentScores, totalScore,
         status: isSac ? "인도적종료(희생)" : (totalScore >= 7 ? "위험(Severe)" : "정상"),
@@ -843,15 +791,23 @@
       records.push(record);
       localStorage.setItem('gvhd_records', JSON.stringify(records));
 
-      const nextId = getNextMouseId(mouseId);
-      const trackerKey = `${evaluator}_${projectName}_${groupName}`;
-      groupLastMouseIds[trackerKey] = nextId;
+      const projMiceOrder = mouseOrderList.filter(m => m.projectName === projectName);
+      const currentIdx = projMiceOrder.findIndex(m => m.group === groupName && m.id === mouseId);
+
+      if (currentIdx !== -1 && currentIdx < projMiceOrder.length - 1) {
+        const nextMouse = projMiceOrder[currentIdx + 1];
+        groupInput.value = nextMouse.group;
+        mouseIdInput.value = nextMouse.id;
+      } else {
+        mouseIdInput.value = getNextMouseId(mouseId);
+      }
+
+      const newActiveGroup = groupInput.value.trim();
+      const newActiveId = mouseIdInput.value.trim();
+      const trackerKey = `${projectName}_${newActiveGroup}`;
+      groupLastMouseIds[trackerKey] = newActiveId;
       localStorage.setItem('gvhd_group_last_ids', JSON.stringify(groupLastMouseIds));
 
-      updateEvaluatorSelect();
-      updateProjectSelect(evaluator);
-
-      document.getElementById('mouseId').value = nextId;
       document.getElementById('currWeight').value = '';
       document.getElementById('memoText').value = '';
       document.getElementById('isSacrificed').checked = false;
@@ -860,11 +816,13 @@
       syncFiltersWithSelection();
       loadBaselineAndPrevious();
 
-      document.getElementById('currWeight').focus();
+      const currInput = document.getElementById('currWeight');
+      currInput.focus();
+      currInput.select();
     }
 
     function exportJSON() {
-      const backupData = { records, projects, mouseBaselines, groupLastMouseIds };
+      const backupData = { records, projects, mouseBaselines, groupLastMouseIds, mouseOrderList };
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -887,9 +845,10 @@
               records = data.records; projects = data.projects;
               mouseBaselines = data.mouseBaselines || {};
               groupLastMouseIds = data.groupLastMouseIds || {};
+              mouseOrderList = data.mouseOrderList || [];
               syncProjectsFromRecords();
               saveAllToLocalStorage();
-              updateEvaluatorSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
+              updateProjectSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
               alert("JSON 백업 데이터 복구 완료!");
             } else alert("올바른 백업 JSON 파일이 아닙니다.");
           } catch (err) { alert("JSON 파싱 실패: " + err); }
@@ -910,14 +869,12 @@
 
             let importedCount = 0;
             rows.forEach(r => {
-              const evaluator = r['Evaluator'] || r['연구원'];
               const mouseId = String(r['MouseID'] || r['ID'] || r['마우스ID'] || '').trim();
-              if (evaluator && mouseId) {
+              if (mouseId) {
                 const rec = {
                   date: String(r['Date'] || r['날짜'] || todayStr),
                   day0Date: String(r['Day0Date'] || r['Date'] || todayStr),
                   dayX: String(r['DayX'] || r['경과일'] || 'Day 0'),
-                  evaluator: String(evaluator),
                   projectName: String(r['Project'] || r['프로젝트'] || 'Imported'),
                   groupName: String(r['Group'] || r['그룹'] || '1'),
                   mouseId: mouseId,
@@ -934,15 +891,16 @@
                   memoText: String(r['Memo'] || r['특이사항'] || '')
                 };
                 records.push(rec);
-                const fullKey = getMouseKey(rec.evaluator, rec.projectName, rec.groupName, rec.mouseId);
+                const fullKey = getMouseKey(rec.projectName, rec.groupName, rec.mouseId);
                 mouseBaselines[fullKey] = rec.baseWeight;
+                addMouseToOrderList(rec.projectName, rec.groupName, rec.mouseId);
                 importedCount++;
               }
             });
 
             syncProjectsFromRecords();
             saveAllToLocalStorage();
-            updateEvaluatorSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
+            updateProjectSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
             alert(`엑셀 파일로부터 ${importedCount}개의 기록 복원 완료!`);
           } catch (err) { alert("엑셀 파싱 실패: " + err); }
         };
@@ -955,17 +913,10 @@
       localStorage.setItem('gvhd_projects', JSON.stringify(projects));
       localStorage.setItem('gvhd_mouse_baselines', JSON.stringify(mouseBaselines));
       localStorage.setItem('gvhd_group_last_ids', JSON.stringify(groupLastMouseIds));
+      localStorage.setItem('gvhd_mouse_order_list', JSON.stringify(mouseOrderList));
     }
 
     function updateFilters() {
-      const filterEv = document.getElementById('filterEvaluator');
-      const currentEv = filterEv.value;
-      const evaluators = [...new Set(records.map(r => r.evaluator))].filter(Boolean);
-      
-      filterEv.innerHTML = '<option value="ALL">전체 연구원</option>';
-      evaluators.forEach(ev => filterEv.appendChild(new Option(ev, ev)));
-      if (evaluators.includes(currentEv)) filterEv.value = currentEv;
-
       const filterProj = document.getElementById('filterProject');
       const currentProj = filterProj.value;
       const projNames = [...new Set(records.map(r => r.projectName))].filter(Boolean);
@@ -976,16 +927,14 @@
 
     function renderTable() {
       const tbody = document.getElementById('dataTable');
-      const evFilter = document.getElementById('filterEvaluator').value;
       const projFilter = document.getElementById('filterProject').value;
       tbody.innerHTML = '';
 
       let filtered = records.map((r, idx) => ({ ...r, originalIndex: idx }));
-      if (evFilter !== "ALL") filtered = filtered.filter(r => r.evaluator === evFilter);
       if (projFilter !== "ALL") filtered = filtered.filter(r => r.projectName === projFilter);
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="18" class="p-4 text-center text-slate-400">저장된 데이터가 없습니다.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="17" class="p-4 text-center text-slate-400">저장된 데이터가 없습니다.</td></tr>`;
         return;
       }
 
@@ -995,11 +944,10 @@
         tr.innerHTML = `
           <td class="p-2 text-center"><input type="checkbox" class="row-checkbox w-4 h-4" data-index="${r.originalIndex}"></td>
           <td class="p-2">${r.date}</td>
-          <td class="p-2 font-medium">${r.evaluator}</td>
           <td class="p-2 font-medium">${r.projectName || '-'}</td>
           <td class="p-2 font-bold text-blue-600">${r.dayX || '-'}</td>
           <td class="p-2 font-bold">${r.groupName || '1'}</td>
-          <td class="p-2 font-bold text-blue-700 underline cursor-pointer hover:text-blue-900" onclick="openHistoryModal('${r.evaluator}', '${r.projectName}', '${r.groupName}', '${r.mouseId}')">${r.mouseId}</td>
+          <td class="p-2 font-bold text-blue-700 underline cursor-pointer hover:text-blue-900" onclick="openHistoryModal('${r.projectName}', '${r.groupName}', '${r.mouseId}')">${r.mouseId}</td>
           <td class="p-2">${r.currWeight}g</td>
           <td class="p-2">${r.weightPct}</td>
           <td class="p-2">${r.weightScore}</td>
@@ -1018,11 +966,11 @@
       });
     }
 
-    function openHistoryModal(evaluator, projectName, group, mouseId) {
+    function openHistoryModal(projectName, group, mouseId) {
       document.getElementById('historyModalTitle').innerText = `🐭 ID ${mouseId} (Group ${group})`;
-      document.getElementById('historyModalSubtitle').innerText = `연구원: ${evaluator} | 프로젝트: ${projectName || '-'}`;
+      document.getElementById('historyModalSubtitle').innerText = `프로젝트: ${projectName || '-'}`;
       
-      const matched = records.filter(r => r.evaluator === evaluator && (!projectName || r.projectName === projectName) && r.groupName === group && r.mouseId === mouseId)
+      const matched = records.filter(r => (!projectName || r.projectName === projectName) && r.groupName === group && r.mouseId === mouseId)
                             .sort((a,b) => new Date(a.date) - new Date(b.date));
       
       const tbody = document.getElementById('historyTableBody');
@@ -1060,11 +1008,9 @@
     }
 
     function updateChart() {
-      const evFilter = document.getElementById('filterEvaluator').value;
       const projFilter = document.getElementById('filterProject').value;
 
       let filtered = records;
-      if (evFilter !== "ALL") filtered = filtered.filter(r => r.evaluator === evFilter);
       if (projFilter !== "ALL") filtered = filtered.filter(r => r.projectName === projFilter);
 
       const days = [...new Set(filtered.map(r => r.dayX))].sort((a,b) => {
@@ -1073,7 +1019,7 @@
         return numA - numB;
       });
 
-      const groups = [...new Set(filtered.map(r => r.groupName))].sort();
+      const groups = [...new Set(filtered.map(r => r.groupName))];
       const colors = ['#2563eb', '#dc2626', '#16a34a', '#d97706', '#9333ea', '#0891b2'];
 
       const datasets = groups.map((grp, idx) => {
@@ -1148,14 +1094,14 @@
       const idxs = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-index'))).sort((a, b) => b - a);
       idxs.forEach(idx => records.splice(idx, 1));
       saveAllToLocalStorage();
-      updateEvaluatorSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
+      updateProjectSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
     }
 
     function deleteSingle(index) {
       if (!confirm("삭제하시겠습니까?")) return;
       records.splice(index, 1);
       saveAllToLocalStorage();
-      updateEvaluatorSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
+      updateProjectSelect(); updateGroupDatalist(true); syncFiltersWithSelection();
     }
 
     function openProjectModal() {
@@ -1175,7 +1121,7 @@
         div.innerHTML = `
           <div>
             <span class="font-bold text-slate-800">${p.name}</span>
-            <span class="text-slate-500 block text-[10px]">(연구원: ${p.evaluator || '미지정'} / Day0: ${p.day0Date || '-'})</span>
+            <span class="text-slate-500 block text-[10px]">(Day0: ${p.day0Date || '-'})</span>
           </div>
           <button type="button" onclick="deleteProject('${p.id}')" class="touch-target-btn bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-3 py-1.5 rounded-lg transition">삭제</button>
         `;
@@ -1191,11 +1137,10 @@
       if (!confirm("프로젝트를 삭제하시겠습니까?")) return;
       projects = projects.filter(p => p.id !== id);
       saveAllToLocalStorage();
-      openProjectModal(); updateEvaluatorSelect(); updateProjectSelect(getSelectedEvaluatorName());
+      openProjectModal(); updateProjectSelect();
     }
 
     function openBulkModal() {
-      document.getElementById('bulkEvaluator').value = getSelectedEvaluatorName();
       document.getElementById('bulkProject').value = getSelectedProjectName();
       document.getElementById('bulkModal').classList.remove('hidden');
     }
@@ -1203,7 +1148,7 @@
     function closeBulkModal() { document.getElementById('bulkModal').classList.add('hidden'); }
 
     function downloadBulkSample() {
-      const sampleAOA = [["Group", "MouseID", "BaseWeight"], ["Control", "1", 20.5], ["GvHD", "1", 21.2]];
+      const sampleAOA = [["Group", "MouseID", "BaseWeight"], ["CON", "1-1", 20.5], ["CON", "1-2", 20.8], ["10mg", "1-1", 21.2]];
       const ws = XLSX.utils.aoa_to_sheet(sampleAOA);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "BaseWeight_Sample");
@@ -1212,11 +1157,10 @@
 
     function processBulkUpload() {
       const fileInput = document.getElementById('bulkFileInput');
-      const evaluator = document.getElementById('bulkEvaluator').value.trim();
       const projectName = document.getElementById('bulkProject').value.trim();
 
       if (!fileInput.files || fileInput.files.length === 0) return alert("업로드할 파일을 선택하세요.");
-      if (!evaluator || !projectName) return alert("연구원과 프로젝트명을 입력해 주세요.");
+      if (!projectName) return alert("프로젝트명을 입력해 주세요.");
 
       const file = fileInput.files[0];
       const reader = new FileReader();
@@ -1228,6 +1172,8 @@
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet);
 
+          mouseOrderList = mouseOrderList.filter(m => m.projectName !== projectName);
+
           let addedCount = 0;
           rows.forEach(row => {
             const group = String(row['Group'] || row['그룹'] || '1').trim();
@@ -1235,16 +1181,43 @@
             const weight = parseFloat(row['BaseWeight'] || row['기초체중']);
 
             if (id && !isNaN(weight)) {
-              const fullKey = getMouseKey(evaluator, projectName, group, id);
+              const fullKey = getMouseKey(projectName, group, id);
               mouseBaselines[fullKey] = weight;
-              mouseBaselines[`${evaluator}_${group}_${id}`] = weight;
+              mouseBaselines[`${group}_${id}`] = weight;
+              
+              addMouseToOrderList(projectName, group, id);
               addedCount++;
             }
           });
 
+          const exists = projects.some(p => p.name === projectName);
+          if (!exists) {
+            projects.push({
+              id: 'proj_' + Date.now(),
+              name: projectName,
+              day0Date: todayStr
+            });
+          }
+
           saveAllToLocalStorage();
-          alert(`총 ${addedCount}개 마우스의 기초체중 등록 완료!`);
-          closeBulkModal(); updateEvaluatorSelect(); syncFiltersWithSelection();
+          alert(`총 ${addedCount}개 마우스의 기초체중이 엑셀 순서대로 등록되었습니다!`);
+          closeBulkModal();
+          
+          updateProjectSelect();
+          const targetProj = projects.find(p => p.name === projectName);
+          if (targetProj) {
+            document.getElementById('projectSelect').value = targetProj.id;
+            onProjectChange();
+          }
+
+          const projMice = mouseOrderList.filter(m => m.projectName === projectName);
+          if (projMice.length > 0) {
+            document.getElementById('groupName').value = projMice[0].group;
+            document.getElementById('mouseId').value = projMice[0].id;
+            loadBaselineAndPrevious();
+          }
+
+          syncFiltersWithSelection();
         } catch (err) { alert("오류 발생: " + err); }
       };
 
@@ -1254,14 +1227,14 @@
     function exportToExcel() {
       if (records.length === 0) return alert("저장된 데이터가 없습니다.");
 
-      const evFilter = document.getElementById('filterEvaluator').value;
       const projFilter = document.getElementById('filterProject').value;
 
       let targetRecords = records;
-      if (evFilter !== "ALL") targetRecords = targetRecords.filter(r => r.evaluator === evFilter);
       if (projFilter !== "ALL") targetRecords = targetRecords.filter(r => r.projectName === projFilter);
 
       if (targetRecords.length === 0) return alert("내보낼 데이터가 없습니다.");
+
+      const activeProjName = projFilter !== "ALL" ? projFilter : (getSelectedProjectName() || "ALL_PROJECTS");
 
       const wb = XLSX.utils.book_new();
 
@@ -1274,23 +1247,28 @@
         return numA - numB;
       });
 
-      const mouseMap = {};
+      let mouseList = [];
+      const projOrder = mouseOrderList.filter(m => activeProjName === "ALL_PROJECTS" || m.projectName === activeProjName);
+      
+      projOrder.forEach(m => {
+        const key = `${m.group}_${m.id}`;
+        if (!mouseList.some(item => `${item.group}_${item.id}` === key)) {
+          mouseList.push({ group: m.group, id: m.id, projectName: m.projectName });
+        }
+      });
+
       targetRecords.forEach(r => {
         const key = `${r.groupName}_${r.mouseId}`;
-        if (!mouseMap[key]) mouseMap[key] = { group: r.groupName, id: r.mouseId, evaluator: r.evaluator };
+        if (!mouseList.some(item => `${item.group}_${item.id}` === key)) {
+          mouseList.push({ group: r.groupName, id: r.mouseId, projectName: r.projectName });
+        }
       });
 
-      const mouseList = Object.values(mouseMap).sort((a, b) => {
-        if (a.group !== b.group) return a.group.localeCompare(b.group, undefined, { numeric: true });
-        return a.id.localeCompare(b.id, undefined, { numeric: true });
-      });
-
-      // 1. GvHD_Matrix 시트
       const aoaMatrix = [];
       const merges = [];
-      const row0 = ["연구원", "Group", "ID"];
+      const row0 = [`프로젝트: ${activeProjName}`, "Group", "ID"];
       const row1 = ["", "", ""];
-      const row2 = ["연구원", "Group", "ID"];
+      const row2 = ["프로젝트", "Group", "ID"];
       const colsPerDay = 8;
 
       dayKeys.forEach((dayKey, dIdx) => {
@@ -1307,9 +1285,9 @@
       aoaMatrix.push(row0, row1, row2);
 
       mouseList.forEach((m) => {
-        const rowData = [m.evaluator, m.group, m.id];
+        const rowData = [m.projectName, m.group, m.id];
         dayKeys.forEach(dayKey => {
-          const rec = targetRecords.find(r => r.evaluator === m.evaluator && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
+          const rec = targetRecords.find(r => r.projectName === m.projectName && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
           if (rec) rowData.push(rec.weightScore ?? 0, rec.posture ?? 0, rec.activity ?? 0, rec.fur ?? 0, rec.skin ?? 0, rec.totalScore ?? 0, rec.status || "정상", rec.memoText || "");
           else rowData.push("", "", "", "", "", "", "", "");
         });
@@ -1320,7 +1298,6 @@
       wsMatrix['!merges'] = merges;
       XLSX.utils.book_append_sheet(wb, wsMatrix, "GvHD_Matrix");
 
-      // 2. Prism_WeightLoss 시트
       const prismWeightRows = [];
       const prismHeader = ["Days", ...mouseList.map(m => `G_${m.group}_M${m.id}`)];
       prismWeightRows.push(prismHeader);
@@ -1328,7 +1305,7 @@
       dayKeys.forEach(dayKey => {
         const row = [dayKey];
         mouseList.forEach(m => {
-          const rec = targetRecords.find(r => r.evaluator === m.evaluator && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
+          const rec = targetRecords.find(r => r.projectName === m.projectName && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
           if (rec) {
             const val = parseFloat(rec.weightPct.replace(/[^0-9.-]/g, ''));
             row.push(isNaN(val) ? "" : val);
@@ -1339,14 +1316,13 @@
       const wsPrismWeight = XLSX.utils.aoa_to_sheet(prismWeightRows);
       XLSX.utils.book_append_sheet(wb, wsPrismWeight, "Prism_WeightLoss");
 
-      // 3. Prism_TotalScore 시트
       const prismScoreRows = [];
       prismScoreRows.push(prismHeader);
 
       dayKeys.forEach(dayKey => {
         const row = [dayKey];
         mouseList.forEach(m => {
-          const rec = targetRecords.find(r => r.evaluator === m.evaluator && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
+          const rec = targetRecords.find(r => r.projectName === m.projectName && r.groupName === m.group && r.mouseId === m.id && r.dayX === dayKey);
           if (rec) row.push(rec.totalScore);
           else row.push("");
         });
@@ -1355,13 +1331,12 @@
       const wsPrismScore = XLSX.utils.aoa_to_sheet(prismScoreRows);
       XLSX.utils.book_append_sheet(wb, wsPrismScore, "Prism_TotalScore");
 
-      // 4. Raw_Data 시트
-      const rawHeader = ["Date", "Day0Date", "Evaluator", "Project", "DayX", "Group", "MouseID", "BaseWeight(g)", "CurrWeight(g)", "WeightLoss(%)", "WeightScore", "Posture", "Activity", "Fur", "Skin", "TotalScore", "Status", "Memo"];
+      const rawHeader = ["Date", "Day0Date", "Project", "DayX", "Group", "MouseID", "BaseWeight(g)", "CurrWeight(g)", "WeightLoss(%)", "WeightScore", "Posture", "Activity", "Fur", "Skin", "TotalScore", "Status", "Memo"];
       const aoaRaw = [rawHeader];
 
       targetRecords.forEach(r => {
         aoaRaw.push([
-          r.date, r.day0Date || r.date, r.evaluator, r.projectName || "", r.dayX, r.groupName, r.mouseId,
+          r.date, r.day0Date || r.date, r.projectName || "", r.dayX, r.groupName, r.mouseId,
           r.baseWeight, r.currWeight, r.weightPct, r.weightScore, r.posture,
           r.activity, r.fur, r.skin, r.totalScore, r.status, r.memoText || ""
         ]);
@@ -1370,11 +1345,11 @@
       const wsRaw = XLSX.utils.aoa_to_sheet(aoaRaw);
       XLSX.utils.book_append_sheet(wb, wsRaw, "Raw_Data");
 
-      const exportFileName = evFilter !== "ALL" ? `GvHD_Scoring_${evFilter}_${todayStr}.xlsx` : `GvHD_Scoring_Matrix_${todayStr}.xlsx`;
+      const exportFileName = `GvHD_Scoring_${activeProjName}_${todayStr}.xlsx`;
       XLSX.writeFile(wb, exportFileName);
     }
 
-    updateEvaluatorSelect();
+    updateProjectSelect();
     syncFiltersWithSelection();
   </script>
 </body>
